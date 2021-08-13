@@ -5,9 +5,9 @@ using UnityEngine;
 
 public static class Constants
 {
-    public const int ChunkSizeX = 16;
-    public const int ChunkSizeY = 15;
-    public const int ChunkSizeZ = 16;
+    public const int ChunkSizeX = 4;//16;
+    public const int ChunkSizeY = 2;//15;
+    public const int ChunkSizeZ = 4;//16;
 
     public const int ChunkHeight = ChunkSizeY;
 

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
@@ -36,6 +36,8 @@ namespace BlockGame.BlockWorld
 			int maxHeight = settings.maxHeight;
 			float persistence = settings.persistence;
 			float scale = settings.scale;
+
+			Debug.Log("HeightMap called");
 
 			for( int i = 0; i < values.Length; ++i )
 			{

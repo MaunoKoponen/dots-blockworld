@@ -16,7 +16,7 @@ namespace BlockGame.BlockWorld
 	public class RegionLoaderAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 	{
 		[SerializeField]
-		int _range = 5;
+		int _range =1 / 5;
 
 		[SerializeField]
 		GenerateRegionHeightMapSettings _heightMapSettings = GenerateRegionHeightMapSettings.Default;

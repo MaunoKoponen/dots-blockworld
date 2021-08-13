@@ -90,12 +90,61 @@ namespace BlockGame.BlockWorld
                 .WithName("InitializeChunkBlocks")
                 .WithAll<GenerateChunk>()
                 .ForEach((int entityInQueryIndex, Entity e, ref DynamicBuffer<ChunkBlockType> blocksBuffer, 
-                in ChunkWorldHeight chunkWorldHeight, in RegionHeightMap heightMapBlob, in RegionIndex regionIndex) =>
+                in ChunkWorldHeight chunkWorldHeight, /*in RegionHeightMap heightMapBlob,*/ in RegionVolumeMap volumeMapBlob, in RegionIndex regionIndex) =>
                 {
                     blocksBuffer.ResizeUninitialized(Constants.ChunkVolume);
 
                     var blocks = blocksBuffer.AsNativeArray();
 
+
+					ref var volumeMap = ref volumeMapBlob.Array;
+
+
+					//Debug.Log("blocks.Length " + blocks.Length);
+						
+						int maxHeight = 	2;
+                        int height  = chunkWorldHeight;
+
+                    for( int i = 0; i < blocks.Length; ++i )
+                    {
+                        int3 xyz = GridUtil.Grid3D.IndexToPos(i);
+                        int x = xyz.x;
+                        int y = xyz.y;
+                        int z = xyz.z;
+
+                        int xyzIndex = GridUtil.Grid3D.PosToIndex(x,y,z);
+						//Debug.Log( "x,y,z gives index " + xyzIndex);
+
+						if(volumeMap[i] == 1)
+						{
+								//blocks[i] = 1;
+								blocks[i] = SelectBlock(height, maxHeight, ref blockIDs);
+						}
+						else if(volumeMap[i] == 2)
+						{
+								blocks[i] = SelectBlock(height, maxHeight, ref blockIDs);
+						}		
+						else
+						{
+								blocks[i] = default;	
+						}
+					}
+                        //int maxHeight = heightMap[xzIndex];
+                        //int height = y + chunkWorldHeight;
+						/*
+                        if (height <= maxHeight)
+						{
+							//original
+							blocks[i] = SelectBlock(height, maxHeight, ref blockIDs);
+							//tests						
+							//blocks[i] = SelectBlock(height, maxHeight, ref blockIDs);	
+						}
+						else	
+                            blocks[i] = default;
+						*/	
+
+
+					/*
                     ref var heightMap = ref heightMapBlob.Array;
 
                     for( int i = 0; i < blocks.Length; ++i )
@@ -111,11 +160,16 @@ namespace BlockGame.BlockWorld
                         int height = y + chunkWorldHeight;
 
                         if (height <= maxHeight)
-                            blocks[i] = SelectBlock(height, maxHeight, ref blockIDs);
-                        else
+						{
+							//original
+							blocks[i] = SelectBlock(height, maxHeight, ref blockIDs);
+							//tests						
+							//blocks[i] = SelectBlock(height, maxHeight, ref blockIDs);	
+						}
+						else	
                             blocks[i] = default;
                     }
-
+				*/
                     commandBuffer.RemoveComponent<GenerateChunk>(entityInQueryIndex, e);
                     commandBuffer.AddComponent<GenerateMesh>(entityInQueryIndex, e);
                 }).ScheduleParallel();

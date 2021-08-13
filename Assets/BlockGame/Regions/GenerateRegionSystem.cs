@@ -28,6 +28,8 @@ namespace BlockGame.BlockWorld
         {
             InitializeRegions();
 
+			GenerateVolumeMapBlobs();
+
             GenerateHeightMapBlobs();
 
             GenerateChunks();
@@ -101,6 +103,34 @@ namespace BlockGame.BlockWorld
             _barrier.AddJobHandleForProducer(Dependency);
         }
 
+		void GenerateVolumeMapBlobs()
+        {
+            var commandBuffer = _barrier.CreateCommandBuffer().ToConcurrent();
+            Entities
+                .WithNone<RegionVolumeMap>()
+                .WithAll<GenerateRegion>()
+                .ForEach((int entityInQueryIndex, Entity e, 
+                in GenerateRegionHeightMapSettings settings,
+                in RegionIndex regionIndex) =>
+                {
+                    var volumeMapBlob = VolumeMapBuilder.BuildVolumeMap(
+                        regionIndex.value * Constants.ChunkSize.xz, Constants.ChunkSurfaceSize,
+                        settings, Allocator.Persistent);
+
+                    var blobComponent = new RegionVolumeMap { volumeMapBlob = volumeMapBlob };
+
+                    commandBuffer.AddComponent(entityInQueryIndex, e, blobComponent);
+
+                    commandBuffer.RemoveComponent<GenerateRegionHeightMapSettings>(entityInQueryIndex, e);
+                    commandBuffer.RemoveComponent<GenerateRegion>(entityInQueryIndex, e);
+
+                    //commandBuffer.AddComponent<GenerateRegionChunks>(entityInQueryIndex, e);
+                }).ScheduleParallel();
+
+            _barrier.AddJobHandleForProducer(Dependency);
+        }
+
+
         void GenerateChunks()
         {
             var commandBuffer = _barrier.CreateCommandBuffer().ToConcurrent();
@@ -111,7 +141,7 @@ namespace BlockGame.BlockWorld
                 .WithAll<GenerateRegionChunks>()
                 .ForEach((Entity e, int entityInQueryIndex,
                 ref DynamicBuffer<LinkedEntityGroup> linkedGroup,
-                in RegionHeightMap heightMap, in RegionIndex regionIndex
+                in RegionHeightMap heightMap, in RegionVolumeMap volumeMap,  in RegionIndex regionIndex
                 ) =>
                 {
                     ref var hmArray = ref heightMap.Array;
@@ -137,6 +167,7 @@ namespace BlockGame.BlockWorld
                         var chunkEntity = commandBuffer.CreateEntity(entityInQueryIndex, chunkArchetype);
                         commandBuffer.AddComponent<ChunkWorldHeight>(entityInQueryIndex, chunkEntity, y);
                         commandBuffer.AddComponent<RegionHeightMap>(entityInQueryIndex, chunkEntity, heightMap);
+						commandBuffer.AddComponent<RegionVolumeMap>(entityInQueryIndex, chunkEntity, volumeMap);
                         commandBuffer.AddComponent<RegionIndex>(entityInQueryIndex, chunkEntity, regionIndex);
                         commandBuffer.AddComponent<GameChunk>(entityInQueryIndex, chunkEntity);
                         commandBuffer.AddComponent<GenerateChunk>(entityInQueryIndex, chunkEntity);
